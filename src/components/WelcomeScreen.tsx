@@ -46,7 +46,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onToggleDemoMode,
   onSelectPrompt,
 }) => {
-  const isMissingKey = health !== null && !health.aiConfigured;
+  const isStaticHost = health !== null && !health.ok;
+  const isMissingKey = health !== null && health.ok && !health.aiConfigured;
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-1 flex-col justify-center px-4 py-8 sm:px-6">
@@ -62,16 +63,26 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </p>
       </div>
 
-      {isMissingKey && (
+      {(isStaticHost || isMissingKey) && (
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-left dark:border-amber-900/60 dark:bg-amber-950/30">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
             <div className="flex-1 text-sm">
               <p className="font-semibold text-amber-950 dark:text-amber-200">
-                Server API key not configured
+                {isStaticHost
+                  ? 'Static Hosting Preview (No Backend Server)'
+                  : 'Server API key not configured'}
               </p>
               <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-300/90">
-                Live AI responses require <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">GEMINI_API_KEY</code> in your server environment variables (Settings &gt; Secrets in AI Studio, or <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">.env</code> on your host).
+                {isStaticHost ? (
+                  <>
+                    GitHub Pages serves the frontend UI only and cannot run the Node.js backend (<code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">server.ts</code>) or keep API keys secret. Deploy the backend on a free Node host for live AI, or enable Demo Mode below to test the interface.
+                  </>
+                ) : (
+                  <>
+                    Live AI responses require <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">GEMINI_API_KEY</code> in your server environment variables (Settings &gt; Secrets in AI Studio, or <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">.env</code> on your host).
+                  </>
+                )}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button

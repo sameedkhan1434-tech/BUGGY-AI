@@ -36,6 +36,8 @@ import {
   saveTheme,
 } from './utils/storage';
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 const FALLBACK_MODELS: ModelOption[] = [
   {
     id: 'gemini-4-hydrogen',
@@ -82,8 +84,13 @@ export default function App() {
   // Fetch backend health & capabilities on mount
   useEffect(() => {
     let active = true;
-    fetch('/api/health')
-      .then((res) => res.json())
+    fetch(`${API_BASE}/api/health`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data: HealthStatus) => {
         if (active && data && typeof data.ok === 'boolean') {
           setHealth(data);
@@ -97,7 +104,7 @@ export default function App() {
             provider: 'Unavailable',
             defaultModel: 'gemini-4-hydrogen',
             models: FALLBACK_MODELS,
-            freeTierLimits: 'Backend connection failed.',
+            freeTierLimits: 'Static hosting detected or backend unavailable.',
           });
         }
       });
@@ -297,7 +304,7 @@ export default function App() {
             })),
           }));
 
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${API_BASE}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -308,7 +315,10 @@ export default function App() {
         });
 
         if (!response.ok) {
-          let errorText = `Request failed (${response.status}).`;
+          let errorText =
+            response.status === 404
+              ? 'Live AI backend is not available on static GitHub Pages hosting. Enable Demo Mode on the home screen to preview the interface, or connect a free Node.js backend (server.ts).'
+              : `Request failed (${response.status}).`;
           try {
             const errJson = (await response.json()) as { error?: string };
             if (errJson?.error) errorText = errJson.error;
@@ -375,7 +385,7 @@ export default function App() {
         if (isFirstExchange) {
           const firstUserMsg = historyForApi.find((m) => m.role === 'user');
           if (firstUserMsg?.content.trim()) {
-            fetch('/api/title', {
+            fetch(`${API_BASE}/api/title`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ prompt: firstUserMsg.content }),

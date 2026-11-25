@@ -239,6 +239,28 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '25mb' }));
 
+const ALLOWED_ORIGINS = new Set(
+  [
+    'https://sameedkhan1434-tech.github.io',
+    process.env.ALLOWED_ORIGIN?.trim(),
+  ].filter((v): v is string => Boolean(v)),
+);
+
+app.use('/api', (req: Request, res: Response, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+
 // Health & capabilities endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
   const apiKey = getConfiguredApiKey();
@@ -446,6 +468,7 @@ async function startServer() {
   } else {
     const distPath = path.resolve(__dirname, 'dist');
     if (fs.existsSync(distPath)) {
+      app.use('/BUGGY-AI', express.static(distPath));
       app.use(express.static(distPath));
       app.get('*', (_req: Request, res: Response) => {
         res.sendFile(path.join(distPath, 'index.html'));

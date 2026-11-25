@@ -1,17 +1,19 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import fs from 'fs';
-import path from 'path';
-import {defineConfig} from 'vite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vite';
 
-export default defineConfig(() => {
+const rootDir = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig(({ command }) => {
   return {
+    base: command === 'build' ? '/BUGGY-AI/' : '/',
     plugins: [
       react(),
       tailwindcss(),
-      // Copies src/assets into dist/ so root-relative URLs like
-      // "/src/assets/images/..." (e.g. generate_image output) still resolve
-      // in production builds. Do not remove.
+      // Copies src/assets into dist/ and prepares GitHub Pages SPA fallback (404.html + .nojekyll).
       {
         name: 'copy-unbundled-src-assets',
         apply: 'build',
@@ -19,18 +21,28 @@ export default defineConfig(() => {
           if (error) {
             return;
           }
-          const distDir = path.resolve(__dirname, 'dist');
-          const srcAssets = path.resolve(__dirname, 'src/assets');
+          const distDir = path.resolve(rootDir, 'dist');
+          const srcAssets = path.resolve(rootDir, 'src/assets');
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
-            fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
+            fs.cpSync(srcAssets, distAssets, { recursive: true, force: true });
+          }
+
+          // GitHub Pages SPA routing & static asset compatibility
+          const indexFile = path.join(distDir, 'index.html');
+          const fallback404 = path.join(distDir, '404.html');
+          if (fs.existsSync(indexFile)) {
+            fs.copyFileSync(indexFile, fallback404);
+          }
+          if (fs.existsSync(distDir)) {
+            fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
           }
         },
       },
     ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(rootDir, '.'),
       },
     },
     server: {
