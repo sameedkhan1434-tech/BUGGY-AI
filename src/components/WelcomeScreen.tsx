@@ -70,14 +70,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <div className="flex-1 text-sm">
               <p className="font-semibold text-amber-950 dark:text-amber-200">
                 {isStaticHost
-                  ? 'Static Hosting Preview (No Backend Server)'
+                  ? demoMode
+                    ? 'GitHub Pages Demo Mode Active'
+                    : 'Static Hosting Preview (No Backend Server)'
                   : 'Server API key not configured'}
               </p>
               <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-300/90">
                 {isStaticHost ? (
-                  <>
-                    GitHub Pages serves the frontend UI only and cannot run the Node.js backend (<code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">server.ts</code>) or keep API keys secret. Deploy the backend on a free Node host for live AI, or enable Demo Mode below to test the interface.
-                  </>
+                  demoMode ? (
+                    <>
+                      GitHub Pages serves the static frontend only without a Node.js backend (<code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">server.ts</code>). Local Demo Mode is enabled—type any message below to test the interface with clearly labelled simulated replies and zero backend requests.
+                    </>
+                  ) : (
+                    <>
+                      GitHub Pages serves the frontend UI only and cannot run <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">server.ts</code>. Deploy the backend on a free Node host for live AI, or enable Demo Mode below to test locally.
+                    </>
+                  )
                 ) : (
                   <>
                     Live AI responses require <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">GEMINI_API_KEY</code> in your server environment variables (Settings &gt; Secrets in AI Studio, or <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">.env</code> on your host).
@@ -94,7 +102,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       : 'border border-amber-300 bg-white text-amber-950 hover:bg-amber-100 dark:border-amber-700 dark:bg-zinc-900 dark:text-amber-200 dark:hover:bg-amber-900/40'
                   }`}
                 >
-                  {demoMode ? 'Demo Preview Enabled (Click to Disable)' : 'Try Clearly-Labelled Demo Mode'}
+                  {demoMode ? 'Demo Mode Enabled (Click to Pause)' : 'Enable Clearly-Labelled Demo Mode'}
                 </button>
               </div>
             </div>

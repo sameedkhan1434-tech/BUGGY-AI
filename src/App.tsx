@@ -24,6 +24,7 @@ import type {
   ModelOption,
   ThemeMode,
 } from './types/chat';
+import { buildLocalDemoResponse } from './utils/demo';
 import {
   applyThemeToDocument,
   createId,
@@ -37,6 +38,10 @@ import {
 } from './utils/storage';
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const isGitHubPagesHost =
+  typeof window !== 'undefined' &&
+  window.location.hostname.toLowerCase().endsWith('.github.io');
+const isStaticGitHubPages = isGitHubPagesHost && !API_BASE;
 
 const FALLBACK_MODELS: ModelOption[] = [
   {
@@ -53,13 +58,24 @@ const FALLBACK_MODELS: ModelOption[] = [
   },
 ];
 
+const STATIC_HOST_HEALTH: HealthStatus = {
+  ok: false,
+  aiConfigured: false,
+  provider: 'GitHub Pages Static Demo',
+  defaultModel: 'gemini-4-hydrogen',
+  models: FALLBACK_MODELS,
+  freeTierLimits: 'GitHub Pages serves static assets only — running local Demo Mode in your browser.',
+};
+
 export default function App() {
   const [conversations, setConversations] = useState<Conversation[]>(() => loadConversations());
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(() => loadTheme());
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => loadSelectedModel());
-  const [health, setHealth] = useState<HealthStatus | null>(null);
-  const [demoMode, setDemoMode] = useState(false);
+  const [health, setHealth] = useState<HealthStatus | null>(() =>
+    isStaticGitHubPages ? STATIC_HOST_HEALTH : null,
+  );
+  const [demoMode, setDemoMode] = useState<boolean>(() => isStaticGitHubPages);
 
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -75,18 +91,24 @@ export default function App() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const userScrolledUpRef = useRef(false);
+  const userToggledDemoRef = useRef(false);
 
   const ttsSupported =
     typeof window !== 'undefined' &&
     'speechSynthesis' in window &&
     typeof SpeechSynthesisUtterance !== 'undefined';
 
-  // Fetch backend health & capabilities on mount
+  // Fetch backend health & capabilities on mount (skip on static GitHub Pages)
   useEffect(() => {
+    if (isStaticGitHubPages) {
+      return;
+    }
+
     let active = true;
     fetch(`${API_BASE}/api/health`)
       .then((res) => {
-        if (!res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok || !contentType.includes('application/json')) {
           throw new Error(`HTTP ${res.status}`);
         }
         return res.json();
@@ -106,6 +128,9 @@ export default function App() {
             models: FALLBACK_MODELS,
             freeTierLimits: 'Static hosting detected or backend unavailable.',
           });
+          if (!API_BASE && !userToggledDemoRef.current) {
+            setDemoMode(true);
+          }
         }
       });
     return () => {
@@ -222,24 +247,17 @@ export default function App() {
       convId: string,
       assistantId: string,
       promptText: string,
+      modelToUse: ModelId,
+      messageAttachments: Attachment[] | undefined,
+      isStaticHost: boolean,
       signal: AbortSignal,
     ) => {
-      const demoResponse = [
-        `This is a **clearly labelled Demo Mode preview** because \`GEMINI_API_KEY\` is not configured on the server.`,
-        ``,
-        `You asked: *"${promptText.slice(0, 120)}${promptText.length > 120 ? '...' : ''}"*`,
-        ``,
-        `### Example Formatted Output`,
-        `- Streaming responses, **Markdown**, and syntax-highlighted code blocks work end-to-end.`,
-        `- Configure \`GEMINI_API_KEY\` in your server environment variables to switch to live Gemini free-tier responses.`,
-        ``,
-        `\`\`\`typescript`,
-        `// Demo preview snippet`,
-        `export function greet(name: string): string {`,
-        `  return \`Hello from BUGGY AI, \${name}!\`;`,
-        `}`,
-        `\`\`\``,
-      ].join('\n');
+      const demoResponse = buildLocalDemoResponse({
+        promptText,
+        model: modelToUse,
+        attachments: messageAttachments,
+        isStaticHost,
+      });
 
       const words = demoResponse.split(/(\s+)/);
       for (const token of words) {
@@ -257,7 +275,7 @@ export default function App() {
           content: m.content + token,
         }));
         scrollToBottom();
-        await new Promise((r) => setTimeout(r, 18));
+        await new Promise((r) => setTimeout(r, 14));
       }
     },
     [scrollToBottom, updateAssistantMessage],
@@ -279,14 +297,31 @@ export default function App() {
       abortControllerRef.current = controller;
 
       try {
-        if (demoMode && health && !health.aiConfigured) {
+        const isStaticNoBackend =
+          isStaticGitHubPages || (!API_BASE && health !== null && !health.ok);
+        const isLiveBackendConfigured = Boolean(health?.ok && health.aiConfigured);
+
+        if (demoMode && !isLiveBackendConfigured) {
           const lastUser = [...historyForApi].reverse().find((m) => m.role === 'user');
           await runDemoStream(
             convId,
             assistantId,
-            lastUser?.content || 'Attached file analysis',
+            lastUser?.content || '',
+            modelToUse,
+            lastUser?.attachments,
+            isStaticNoBackend,
             controller.signal,
           );
+          return;
+        }
+
+        if (isStaticNoBackend) {
+          updateAssistantMessage(convId, assistantId, (m) => ({
+            ...m,
+            isDemo: true,
+            content:
+              'Live AI backend is not available on static GitHub Pages hosting, and Demo Mode is currently paused. Re-enable Demo Mode on the welcome screen to continue testing local simulated responses without backend requests.',
+          }));
           return;
         }
 
@@ -316,7 +351,7 @@ export default function App() {
 
         if (!response.ok) {
           let errorText =
-            response.status === 404
+            response.status === 404 || response.status === 405
               ? 'Live AI backend is not available on static GitHub Pages hosting. Enable Demo Mode on the home screen to preview the interface, or connect a free Node.js backend (server.ts).'
               : `Request failed (${response.status}).`;
           try {
@@ -765,7 +800,10 @@ export default function App() {
             <WelcomeScreen
               health={health}
               demoMode={demoMode}
-              onToggleDemoMode={() => setDemoMode((prev) => !prev)}
+              onToggleDemoMode={() => {
+                userToggledDemoRef.current = true;
+                setDemoMode((prev) => !prev);
+              }}
               onSelectPrompt={(prompt) => {
                 void handleSend(prompt);
               }}

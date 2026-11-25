@@ -108,7 +108,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             <div className="min-w-0 flex-1 pt-0.5">
               {msg.isDemo && (
                 <div className="mb-2 text-xs font-medium text-amber-700 dark:text-amber-400">
-                  Demo preview · Simulated response (API key not configured)
+                  Demo Mode · Local simulated response (no live AI backend)
                 </div>
               )}
 
