@@ -259,7 +259,7 @@ export const Composer: React.FC<ComposerProps> = ({
   const currentModel = models.find((m) => m.id === selectedModel) || models[0];
 
   return (
-    <div className="mx-auto w-full max-w-[760px] px-3 pb-3 sm:px-6 sm:pb-5">
+    <div className="mx-auto w-full max-w-[760px] px-3 pt-1 pb-3 sm:px-6 sm:pb-5">
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -271,29 +271,29 @@ export const Composer: React.FC<ComposerProps> = ({
           setIsDragging(false);
           await handleFiles(e.dataTransfer.files);
         }}
-        className={`relative rounded-2xl border bg-white shadow-xs transition-colors dark:bg-zinc-900 ${
+        className={`relative rounded-[26px] border transition-all duration-150 ${
           isDragging
-            ? 'border-zinc-900 ring-2 ring-zinc-900/10 dark:border-zinc-100 dark:ring-zinc-100/10'
-            : 'border-zinc-200 focus-within:border-zinc-400 dark:border-zinc-800 dark:focus-within:border-zinc-600'
+            ? 'border-zinc-900 bg-zinc-50 ring-2 ring-zinc-900/10 dark:border-zinc-100 dark:bg-zinc-900 dark:ring-zinc-100/10'
+            : 'border-zinc-200/90 bg-zinc-50/75 shadow-[0_2px_16px_rgba(0,0,0,0.04)] focus-within:border-zinc-300 focus-within:bg-white focus-within:shadow-[0_4px_24px_rgba(0,0,0,0.07)] dark:border-zinc-800 dark:bg-zinc-900/85 dark:shadow-[0_2px_20px_rgba(0,0,0,0.35)] dark:focus-within:border-zinc-700 dark:focus-within:bg-zinc-900'
         }`}
       >
         {/* Attachment Previews */}
         {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2 border-b border-zinc-100 px-3.5 pt-3 pb-2.5 dark:border-zinc-800">
+          <div className="flex flex-wrap gap-2 border-b border-zinc-200/70 px-4 pt-3.5 pb-3 dark:border-zinc-800">
             {attachments.map((att) => (
               <div
                 key={att.id}
-                className="relative flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1.5 pr-7 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+                className="relative flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 pr-7 text-xs shadow-2xs dark:border-zinc-700 dark:bg-zinc-800"
               >
                 {att.kind === 'image' && att.previewUrl ? (
                   <img
                     src={att.previewUrl}
                     alt={att.name}
                     referrerPolicy="no-referrer"
-                    className="h-10 w-10 rounded-lg object-cover"
+                    className="h-10 w-10 rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-200/70 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
                     <FileText className="h-4 w-4" />
                   </div>
                 )}
@@ -308,10 +308,10 @@ export const Composer: React.FC<ComposerProps> = ({
                 <button
                   type="button"
                   onClick={() => onRemoveAttachment(att.id)}
-                  className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+                  className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                   aria-label={`Remove ${att.name}`}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
@@ -319,7 +319,7 @@ export const Composer: React.FC<ComposerProps> = ({
         )}
 
         {/* Textarea */}
-        <div className="px-4 pt-3 pb-1">
+        <div className="px-5 pt-4 pb-1.5">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -328,16 +328,16 @@ export const Composer: React.FC<ComposerProps> = ({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={
-              isListening ? 'Listening... speak clearly' : 'Message BUGGY AI...'
+              isListening ? 'Listening... speak clearly' : 'Ask BUGGY AI anything...'
             }
             aria-label="Message BUGGY AI"
-            className="max-h-[200px] min-h-[28px] w-full resize-none bg-transparent text-[15px] leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="max-h-[200px] min-h-[28px] w-full resize-none bg-transparent text-[15.5px] leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
         </div>
 
         {/* Bottom Controls Bar */}
-        <div className="flex items-center justify-between gap-2 px-2.5 pt-1 pb-2.5">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between gap-2 px-3 pt-1 pb-3">
+          <div className="flex items-center gap-1.5">
             <input
               ref={photoInputRef}
               type="file"
@@ -369,7 +369,7 @@ export const Composer: React.FC<ComposerProps> = ({
                   setIsAttachMenuOpen((prev) => !prev);
                 }}
                 disabled={isStreaming}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-zinc-200/80 bg-white text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-50 dark:border-zinc-700/80 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:hover:text-zinc-50"
                 aria-label="Add photos or files"
                 aria-haspopup="menu"
                 aria-expanded={isAttachMenuOpen}
@@ -381,7 +381,7 @@ export const Composer: React.FC<ComposerProps> = ({
               {isAttachMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute bottom-full left-0 z-30 mb-2 w-52 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                  className="absolute bottom-full left-0 z-30 mb-2.5 w-52 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
                 >
                   <button
                     type="button"
@@ -416,9 +416,12 @@ export const Composer: React.FC<ComposerProps> = ({
               <div className="relative" ref={modelMenuRef}>
                 <button
                   type="button"
-                  onClick={() => setIsModelMenuOpen((prev) => !prev)}
+                  onClick={() => {
+                    setIsAttachMenuOpen(false);
+                    setIsModelMenuOpen((prev) => !prev);
+                  }}
                   disabled={isStreaming}
-                  className="flex min-h-[40px] items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  className="flex min-h-[40px] items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200/70 hover:text-zinc-950 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   aria-haspopup="listbox"
                   aria-expanded={isModelMenuOpen}
                 >
@@ -429,7 +432,7 @@ export const Composer: React.FC<ComposerProps> = ({
                 {isModelMenuOpen && (
                   <div
                     role="listbox"
-                    className="absolute bottom-full left-0 z-30 mb-2 w-64 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                    className="absolute bottom-full left-0 z-30 mb-2.5 w-64 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
                   >
                     {models.map((m) => {
                       const active = m.id === selectedModel;
@@ -467,10 +470,10 @@ export const Composer: React.FC<ComposerProps> = ({
               type="button"
               onClick={toggleVoiceInput}
               disabled={isStreaming}
-              className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl transition-colors disabled:opacity-50 ${
+              className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
                 isListening
                   ? 'bg-red-50 text-red-600 ring-1 ring-red-200 dark:bg-red-950/50 dark:text-red-400 dark:ring-red-900'
-                  : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                  : 'text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
               }`}
               aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
               title={isListening ? 'Stop voice input' : 'Voice input'}
@@ -486,7 +489,7 @@ export const Composer: React.FC<ComposerProps> = ({
               <button
                 type="button"
                 onClick={onStop}
-                className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200"
+                className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-zinc-900 px-4 text-xs font-medium text-white transition-colors hover:bg-zinc-800 active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200"
                 aria-label="Stop generating"
               >
                 <Square className="h-3.5 w-3.5 fill-current" />
@@ -503,7 +506,7 @@ export const Composer: React.FC<ComposerProps> = ({
                   onSend();
                 }}
                 disabled={!canSend}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-zinc-900 text-white transition-all hover:bg-zinc-800 active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-zinc-900 text-white transition-all hover:bg-zinc-800 active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
                 aria-label="Send message"
               >
                 <ArrowUp className="h-5 w-5" />
@@ -513,7 +516,7 @@ export const Composer: React.FC<ComposerProps> = ({
         </div>
       </div>
 
-      <p className="mt-2 text-center text-[11px] text-zinc-500 dark:text-zinc-500">
+      <p className="mt-2.5 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
         BUGGY AI can make mistakes. Verify important code and facts.
       </p>
     </div>
