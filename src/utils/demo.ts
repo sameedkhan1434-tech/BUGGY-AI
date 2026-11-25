@@ -42,8 +42,8 @@ export function buildLocalDemoResponse(params: {
   const modelLabel = getModelDisplayName(model);
 
   const headerNotice = isStaticHost
-    ? `> **GitHub Pages Demo Mode (Local Simulation):** This response was generated directly in your browser with no \`/api/chat\` or backend request.`
-    : `> **Demo Mode (Local Simulation):** This response was generated locally in your browser because live server AI (\`GEMINI_API_KEY\`) is not active.`;
+    ? `> 🧪 **GitHub Pages Demo Mode (Local Simulation):** This reply was generated locally in your browser with no \`/api/chat\` or backend request.`
+    : `> 🧪 **Demo Mode (Local Simulation):** This reply was generated locally in your browser because live server AI (\`GEMINI_API_KEY\`) is not active.`;
 
   const sections: string[] = [headerNotice];
 
@@ -52,13 +52,30 @@ export function buildLocalDemoResponse(params: {
   }
 
   if (trimmedPrompt && isGreeting(trimmedPrompt)) {
+    const lower = trimmedPrompt.toLowerCase();
+    const isDesiGreeting = /^(salam|assalam|asalam|assalamualaikum|namaste|kya hal|kaise ho)/.test(
+      lower,
+    );
+
+    if (isDesiGreeting) {
+      sections.push(
+        `Walaikum Assalam / Namaste! 👋 **BUGGY AI** mein khush amdeed.`,
+        `Aap ne **${modelLabel}** ke saath *"${trimmedPrompt}"* bheja. Local interface bilkul ready hai:`,
+        `- 💬 **Chat & History:** Aap ki chats browser \`localStorage\` mein save hoti hain.`,
+        `- 📎 **Attachments:** **+** button se photos, PDFs, aur code files locally preview karein.`,
+        `- 🎙️ **Voice & Audio:** Bol kar likhne ke liye mic use karein ya **Listen** par click karein.`,
+        `- 🚀 **Live AI:** Real Gemini responses ke liye \`server.ts\` ko \`GEMINI_API_KEY\` ke saath host karein.`,
+      );
+      return sections.join('\n\n');
+    }
+
     sections.push(
-      `Hello! Welcome to **BUGGY AI**.`,
-      `You sent *"${trimmedPrompt}"* using **${modelLabel}**. Everything in the interface is working locally:`,
-      `- **Chat & History:** Conversations save automatically in browser \`localStorage\`.`,
-      `- **Attachments:** Use the **+** button to preview photos, PDFs, and code/text files locally.`,
-      `- **Voice & Audio:** Try the microphone button to dictate, or click **Listen** below to hear this reply read aloud.`,
-      `- **Live AI Hosting:** To connect real Gemini responses later, run \`server.ts\` on a Node.js host with \`GEMINI_API_KEY\` set.`,
+      `Hey there! 👋 Welcome to **BUGGY AI**.`,
+      `You sent *"${trimmedPrompt}"* using **${modelLabel}**. Everything in the interface is running smoothly locally:`,
+      `- 💬 **Chat & History:** Conversations save automatically in browser \`localStorage\`.`,
+      `- 📎 **Attachments:** Use the **+** button to preview photos, PDFs, and code/text files locally.`,
+      `- 🎙️ **Voice & Audio:** Try the microphone button to dictate, or click **Listen** below to hear this reply read aloud.`,
+      `- 🚀 **Live AI Hosting:** Connect \`server.ts\` with \`GEMINI_API_KEY\` (via \`VITE_API_URL\`) whenever you're ready for real Gemini responses.`,
     );
     return sections.join('\n\n');
   }
@@ -68,22 +85,24 @@ export function buildLocalDemoResponse(params: {
     : '*Attached file preview*';
 
   sections.push(
-    `Received in Demo Mode (${modelLabel}): ${promptPreview}`,
+    `Got it! 💡 Received in Demo Mode (**${modelLabel}**): ${promptPreview}`,
     [
-      `### What This Demo Mode Shows`,
-      `- **Streaming & Markdown:** Simulated token streaming, lists, and syntax-highlighted code blocks work end-to-end without a backend.`,
-      `- **Zero Backend Requests:** No \`POST /api/chat\` call was made, preventing static-host \`405\` errors on GitHub Pages.`,
-      `- **Enable Real AI Later:** Deploy \`server.ts\` with a free-tier \`GEMINI_API_KEY\` (or set \`VITE_API_URL\` to your Node server) for live answers.`,
+      `### ✨ What This Demo Mode Shows`,
+      `- ⚡ **Streaming & Markdown:** Simulated token streaming, lists, and syntax-highlighted code blocks work end-to-end without a backend.`,
+      `- 🛡️ **Zero Backend Errors:** No \`POST /api/chat\` call was sent, keeping static GitHub Pages smooth.`,
+      `- 🚀 **Enable Real AI Later:** Deploy \`server.ts\` with \`GEMINI_API_KEY\` and set \`VITE_API_URL\` to switch to live Gemini answers.`,
     ].join('\n'),
   );
 
   if (/\b(code|ts|typescript|js|javascript|python|react|bug|fix|function|example)\b/i.test(trimmedPrompt)) {
     sections.push(
       [
+        `Here's a quick example snippet 💻:`,
+        ``,
         `\`\`\`typescript`,
         `// Local Demo Mode example snippet`,
         `export function buggyDemoReply(input: string): string {`,
-        `  return \`[Demo Mode] Received: \${input.trim()}\`;`,
+        `  return \`[Demo Mode] Received: \${input.trim()} ✨\`;`,
         `}`,
         `\`\`\``,
       ].join('\n'),

@@ -37,7 +37,13 @@ import {
   saveTheme,
 } from './utils/storage';
 
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+function normalizeApiBase(raw: string | undefined): string {
+  const trimmed = (raw || '').trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  return /^https?:\/\/[^/\s]+/i.test(trimmed) ? trimmed : '';
+}
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 const isGitHubPagesHost =
   typeof window !== 'undefined' &&
   window.location.hostname.toLowerCase().endsWith('.github.io');
@@ -98,45 +104,47 @@ export default function App() {
     'speechSynthesis' in window &&
     typeof SpeechSynthesisUtterance !== 'undefined';
 
-  // Fetch backend health & capabilities on mount (skip on static GitHub Pages)
-  useEffect(() => {
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+
+  const checkHealth = useCallback(async () => {
     if (isStaticGitHubPages) {
       return;
     }
 
-    let active = true;
-    fetch(`${API_BASE}/api/health`)
-      .then((res) => {
-        const contentType = res.headers.get('content-type') || '';
-        if (!res.ok || !contentType.includes('application/json')) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data: HealthStatus) => {
-        if (active && data && typeof data.ok === 'boolean') {
-          setHealth(data);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setHealth({
-            ok: false,
-            aiConfigured: false,
-            provider: 'Unavailable',
-            defaultModel: 'gemini-4-hydrogen',
-            models: FALLBACK_MODELS,
-            freeTierLimits: 'Static hosting detected or backend unavailable.',
-          });
-          if (!API_BASE && !userToggledDemoRef.current) {
-            setDemoMode(true);
-          }
-        }
+    setIsCheckingHealth(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/health`);
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok || !contentType.includes('application/json')) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as HealthStatus;
+      if (data && typeof data.ok === 'boolean') {
+        setHealth(data);
+      }
+    } catch {
+      setHealth({
+        ok: false,
+        aiConfigured: false,
+        provider: 'Unavailable',
+        defaultModel: 'gemini-4-hydrogen',
+        models: FALLBACK_MODELS,
+        freeTierLimits: API_BASE
+          ? 'Configured AI backend is currently unreachable or waking up.'
+          : 'Static hosting detected or backend unavailable.',
       });
-    return () => {
-      active = false;
-    };
+      if (!API_BASE && !userToggledDemoRef.current) {
+        setDemoMode(true);
+      }
+    } finally {
+      setIsCheckingHealth(false);
+    }
   }, []);
+
+  // Fetch backend health & capabilities on mount (skip on static GitHub Pages)
+  useEffect(() => {
+    void checkHealth();
+  }, [checkHealth]);
 
   // Persist conversations
   useEffect(() => {
@@ -352,7 +360,9 @@ export default function App() {
         if (!response.ok) {
           let errorText =
             response.status === 404 || response.status === 405
-              ? 'Live AI backend is not available on static GitHub Pages hosting. Enable Demo Mode on the home screen to preview the interface, or connect a free Node.js backend (server.ts).'
+              ? API_BASE
+                ? `Configured backend (${API_BASE}) returned HTTP ${response.status}. Verify VITE_API_URL points to your deployed BUGGY AI server.`
+                : 'Live AI backend is not available on static GitHub Pages hosting. Enable Demo Mode on the home screen to preview the interface, or connect a free Node.js backend (server.ts).'
               : `Request failed (${response.status}).`;
           try {
             const errJson = (await response.json()) as { error?: string };
@@ -370,6 +380,10 @@ export default function App() {
 
         if (!response.body) {
           throw new Error('Server did not return a readable stream.');
+        }
+
+        if (health && !health.ok) {
+          void checkHealth();
         }
 
         const reader = response.body.getReader();
@@ -446,10 +460,14 @@ export default function App() {
             content: m.content || 'Generation stopped.',
           }));
         } else {
-          const message =
+          const rawMsg =
             err instanceof Error
               ? err.message
               : 'Network error while connecting to BUGGY AI server.';
+          const message =
+            API_BASE && /failed to fetch|networkerror|load failed/i.test(rawMsg)
+              ? `Could not reach the configured AI backend (${API_BASE}). If you use a free-tier host, it may still be waking up—wait 30 seconds and click Retry, or verify CORS (ALLOWED_ORIGIN) includes this site.`
+              : rawMsg;
           updateAssistantMessage(convId, assistantId, (m) => ({
             ...m,
             content: message,
@@ -462,7 +480,7 @@ export default function App() {
         scrollToBottom();
       }
     },
-    [demoMode, health, runDemoStream, scrollToBottom, updateAssistantMessage],
+    [checkHealth, demoMode, health, runDemoStream, scrollToBottom, updateAssistantMessage],
   );
 
   const handleSend = useCallback(
@@ -800,6 +818,9 @@ export default function App() {
             <WelcomeScreen
               health={health}
               demoMode={demoMode}
+              hasConfiguredBackend={Boolean(API_BASE)}
+              isCheckingHealth={isCheckingHealth}
+              onRetryHealth={() => void checkHealth()}
               onToggleDemoMode={() => {
                 userToggledDemoRef.current = true;
                 setDemoMode((prev) => !prev);

@@ -6,6 +6,9 @@ import { BuggyLogo } from './BuggyLogo';
 interface WelcomeScreenProps {
   health: HealthStatus | null;
   demoMode: boolean;
+  hasConfiguredBackend?: boolean;
+  isCheckingHealth?: boolean;
+  onRetryHealth?: () => void;
   onToggleDemoMode: () => void;
   onSelectPrompt: (prompt: string) => void;
 }
@@ -43,6 +46,9 @@ function getGreeting(): string {
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   health,
   demoMode,
+  hasConfiguredBackend = false,
+  isCheckingHealth = false,
+  onRetryHealth,
   onToggleDemoMode,
   onSelectPrompt,
 }) => {
@@ -70,14 +76,20 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <div className="flex-1 text-sm">
               <p className="font-semibold text-amber-950 dark:text-amber-200">
                 {isStaticHost
-                  ? demoMode
-                    ? 'GitHub Pages Demo Mode Active'
-                    : 'Static Hosting Preview (No Backend Server)'
+                  ? hasConfiguredBackend
+                    ? 'AI Backend Waking Up or Unreachable'
+                    : demoMode
+                      ? 'GitHub Pages Demo Mode Active'
+                      : 'Static Hosting Preview (No Backend Server)'
                   : 'Server API key not configured'}
               </p>
               <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-300/90">
                 {isStaticHost ? (
-                  demoMode ? (
+                  hasConfiguredBackend ? (
+                    <>
+                      Could not connect to the configured backend server yet. Free-tier Node hosts can take 30–50 seconds to wake up from sleep—try retrying in a moment, or verify <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">VITE_API_URL</code> and CORS settings.
+                    </>
+                  ) : demoMode ? (
                     <>
                       GitHub Pages serves the static frontend only without a Node.js backend (<code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/50">server.ts</code>). Local Demo Mode is enabled—type any message below to test the interface with clearly labelled simulated replies and zero backend requests.
                     </>
@@ -93,6 +105,16 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 )}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
+                {hasConfiguredBackend && isStaticHost && onRetryHealth && (
+                  <button
+                    type="button"
+                    onClick={onRetryHealth}
+                    disabled={isCheckingHealth}
+                    className="min-h-[38px] rounded-xl bg-amber-900 px-3.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-800 disabled:opacity-60 dark:bg-amber-400 dark:text-zinc-950 dark:hover:bg-amber-300"
+                  >
+                    {isCheckingHealth ? 'Checking Backend...' : 'Retry Connection'}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={onToggleDemoMode}

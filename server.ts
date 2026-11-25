@@ -56,8 +56,10 @@ interface IncomingMessage {
   attachments?: IncomingAttachment[];
 }
 
-const SYSTEM_INSTRUCTION = `You are BUGGY AI, a calm, thoughtful, and highly capable AI assistant.
-- Be accurate, clear, and genuinely helpful without filler or sycophancy.
+const SYSTEM_INSTRUCTION = `You are BUGGY AI, a friendly, calm, thoughtful, and highly capable AI assistant.
+- Match the user's language and communication style naturally (whether English, Urdu, Hindi, Roman Urdu, or any other language they use).
+- Use relevant emojis naturally in greetings, reactions, explanations, and friendly replies—just like ChatGPT—keeping them balanced and meaningful without overusing them.
+- Be accurate, clear, and genuinely helpful without unnecessary filler.
 - Use clean Markdown formatting when appropriate: headings, concise lists, tables, and fenced code blocks with explicit language identifiers (e.g. \`\`\`typescript, \`\`\`python).
 - When the user attaches images, PDFs, or text/code files, analyze their actual contents carefully and cite specific details you observe.
 - If you are unsure or a request lacks context, say so honestly and ask a focused clarifying question.`;
@@ -242,8 +244,11 @@ app.use(express.json({ limit: '25mb' }));
 const ALLOWED_ORIGINS = new Set(
   [
     'https://sameedkhan1434-tech.github.io',
-    process.env.ALLOWED_ORIGIN?.trim(),
-  ].filter((v): v is string => Boolean(v)),
+    ...(process.env.ALLOWED_ORIGIN || '')
+      .split(',')
+      .map((origin) => origin.trim().replace(/\/+$/, ''))
+      .filter(Boolean),
+  ],
 );
 
 app.use('/api', (req: Request, res: Response, next) => {
@@ -474,7 +479,15 @@ async function startServer() {
         res.sendFile(path.join(distPath, 'index.html'));
       });
     } else {
-      console.warn('dist/ directory not found. Run "npm run build" before starting in production.');
+      console.log('dist/ directory not found — running BUGGY AI in API-only backend mode.');
+      app.get('/', (_req: Request, res: Response) => {
+        res.json({
+          ok: true,
+          service: 'BUGGY AI Backend',
+          aiConfigured: Boolean(getConfiguredApiKey()),
+          endpoints: ['/api/health', '/api/chat', '/api/title'],
+        });
+      });
     }
   }
 
