@@ -1,0 +1,6 @@
+{
+  "name": "BUGGY AI",
+  "description": "BUGGY AI — A fast, minimal, free-tier AI assistant with streaming chat, syntax-highlighted code, multimodal image and PDF analysis, and voice support.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,160 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.45);
+}
+
+/* Syntax highlighting theme (highlight.js) adapted cleanly for light and dark surfaces */
+.hljs {
+  color: #18181b;
+  background: transparent;
+}
+.hljs-comment,
+.hljs-quote {
+  color: #71717a;
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #9333ea;
+  font-weight: 500;
+}
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #0284c7;
+}
+.hljs-string,
+.hljs-doctag {
+  color: #059669;
+}
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #2563eb;
+  font-weight: 600;
+}
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #d97706;
+}
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #dc2626;
+}
+.hljs-regexp,
+.hljs-link {
+  color: #0d9488;
+}
+.hljs-symbol,
+.hljs-bullet {
+  color: #7c3aed;
+}
+.hljs-built_in {
+  color: #0369a1;
+}
+.hljs-meta {
+  color: #52525b;
+}
+
+.dark .hljs {
+  color: #e4e4e7;
+}
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: #71717a;
+}
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-subst {
+  color: #c084fc;
+}
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-tag .hljs-attr {
+  color: #38bdf8;
+}
+.dark .hljs-string,
+.dark .hljs-doctag {
+  color: #34d399;
+}
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-selector-id {
+  color: #60a5fa;
+}
+.dark .hljs-type,
+.dark .hljs-class .hljs-title {
+  color: #fbbf24;
+}
+.dark .hljs-tag,
+.dark .hljs-name,
+.dark .hljs-attribute {
+  color: #f87171;
+}
+.dark .hljs-regexp,
+.dark .hljs-link {
+  color: #2dd4bf;
+}
+.dark .hljs-symbol,
+.dark .hljs-bullet {
+  color: #a78bfa;
+}
+.dark .hljs-built_in {
+  color: #7dd3fc;
+}
+.dark .hljs-meta {
+  color: #a1a1aa;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
